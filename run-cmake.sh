@@ -34,7 +34,7 @@ if [[ ${#EXECUTABLES[@]} -eq 0 ]]; then
     exit 1
 fi
 
-# ✅ CASE 1: If only one executable, just run it.
+# CASE 1: If only one executable, just run it.
 if [[ ${#EXECUTABLES[@]} -eq 1 ]]; then
     echo "Build successful."
     echo "Running executable: ${EXECUTABLES[0]}"
@@ -42,7 +42,7 @@ if [[ ${#EXECUTABLES[@]} -eq 1 ]]; then
     exit 0
 fi
 
-# ✅ CASE 2: If multiple executables, show a selection menu.
+# CASE 2: If multiple executables, show a selection menu.
 echo "Build successful."
 echo "Multiple executables found:"
 for i in "${!EXECUTABLES[@]}"; do

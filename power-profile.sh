@@ -100,6 +100,30 @@ apply_profile() {
             echo "CPU power boosted to 20W for maximum performance"
             ;;
             
+        "extreme")
+            echo "⚠️  EXTREME PERFORMANCE MODE WARNING ⚠️"
+            echo "This profile pushes your ThinkPad X395 beyond design limits:"
+            echo "- CPU TDP: 25W (design limit is 15W)"
+            echo "- May cause high temperatures (80-90°C+)"
+            echo "- Increased fan noise and potential thermal throttling"
+            echo "- Use only for short bursts of demanding tasks"
+            echo "- Monitor temperatures with 'watch sensors'"
+            echo ""
+            read -p "Do you understand the risks and want to continue? [y/N]: " confirm
+            
+            if [[ $confirm =~ ^[Yy]$ ]]; then
+                echo "Applying extreme performance profile..."
+                ryzenadj --stapm-limit=25000 --fast-limit=30000 --slow-limit=25000
+                configure_tlp "performance"
+                echo "🔥 CPU power boosted to 25W - MONITOR TEMPERATURES CLOSELY!"
+                echo "Recommended: Run 'watch sensors' in another terminal"
+                echo "Safe operating temperature: Keep under 85°C"
+            else
+                echo "Extreme profile cancelled - staying safe!"
+                exit 0
+            fi
+            ;;
+            
         "custom")
             if [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
                 echo "Custom profile requires 3 values: stapm-limit fast-limit slow-limit"
@@ -164,6 +188,20 @@ show_detailed_tlp() {
     tlp-stat -c
 }
 
+# Show temperature monitoring tip
+show_temp_monitor() {
+    echo "Temperature Monitoring Commands:"
+    echo "  sensors                    - Show current temperatures"
+    echo "  watch sensors              - Monitor temperatures in real-time"
+    echo "  watch -n 1 'sensors | grep Core'  - Monitor CPU cores only"
+    echo ""
+    echo "Safe operating temperatures:"
+    echo "  Normal: < 70°C"
+    echo "  Acceptable: 70-80°C"
+    echo "  Caution: 80-85°C"
+    echo "  Dangerous: > 85°C (consider reducing load)"
+}
+
 # Show usage
 show_usage() {
     echo "Usage: $0 [command]"
@@ -171,18 +209,26 @@ show_usage() {
     echo "  battery      - Low power mode for better battery life (8W)"
     echo "  balanced     - Balanced mode for daily use (15W)"
     echo "  performance  - High performance mode (20W)"
+    echo "  extreme      - ⚠️  Extreme performance mode (25W) - USE WITH CAUTION"
     echo "  custom X Y Z - Custom TDP values (stapm-limit, fast-limit, slow-limit in mW)"
     echo "  status       - Show current TDP and TLP settings summary"
     echo "  tlp-details  - Show detailed TLP configuration"
     echo "  tlp-restore  - Restore original TLP configuration"
+    echo "  temp-monitor - Show temperature monitoring commands"
     echo "  help         - Show this help message"
+    echo ""
+    echo "Power Profile Guidelines:"
+    echo "  8W  - Maximum battery life, basic tasks"
+    echo "  15W - Good balance of performance and efficiency"
+    echo "  20W - High performance within thermal design"
+    echo "  25W - Extreme performance, monitor temperatures!"
 }
 
 # Main script
 check_dependencies
 
 case $1 in
-    "battery"|"balanced"|"performance")
+    "battery"|"balanced"|"performance"|"extreme")
         check_sudo
         apply_profile $1
         ;;
@@ -200,13 +246,16 @@ case $1 in
         check_sudo
         restore_tlp_conf
         ;;
+    "temp-monitor")
+        show_temp_monitor
+        ;;
     "help"|*)
         show_usage
         ;;
 esac
 
 # Save the last profile
-if [[ "$1" != "status" && "$1" != "tlp-details" && "$1" != "tlp-restore" && "$1" != "help" && "$1" != "" ]]; then
+if [[ "$1" != "status" && "$1" != "tlp-details" && "$1" != "tlp-restore" && "$1" != "help" && "$1" != "temp-monitor" && "$1" != "" ]]; then
     echo $@ > ~/.last_power_profile
     echo "Profile saved. Use '$0' without arguments to reapply last profile."
 fi
